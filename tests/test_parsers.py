@@ -27,11 +27,21 @@ def test_interface_names_are_normalized():
 
 
 def test_session_split_marks_failed_and_unknown_commands():
-    f, session = facts("R1")
+    # first capture from the lab: "terminal length 0" + a typo in "show ipv6 route"
+    f, session = facts_from_transcript(
+        (FIX / "R1_first_capture.txt").read_text(encoding="utf-8"))
     assert session.hostname == "R1"
     assert "terminal length 0" in session.unrecognized     # not supported in PT
     assert "how ipv6 route" in session.unrecognized
     assert f["ipv6_route"] is None                          # never captured
+
+
+def test_output_pasted_after_bare_prompt_is_recognized():
+    from netauto.parsers import split_session
+    text = "R1#show ip route\nold\nR1#R1#show ip route\nnew line\nR1#"
+    s = split_session(text)
+    assert s.outputs["ip_route"].text.strip() == "new line"   # newest run wins
+    assert s.unrecognized == []
 
 
 def test_ip_interface_brief():
@@ -50,13 +60,15 @@ def test_ipv6_interface_brief_separates_link_local_and_global():
 
 
 def test_ip_route_ecmp_and_truncation_detection():
-    f, _ = facts("R2")
+    f, _ = facts_from_transcript((FIX / "R1_first_capture.txt").read_text(encoding="utf-8"))
+    assert f["ip_route"].expected_count == 13 and len(f["ip_route"].routes) == 11
+    assert f["ip_route"].complete is False                  # copy was cut short
+    f, _ = facts("R1")
     rt = f["ip_route"]
-    ecmp = rt.routes["10.12.255.4/30"]
+    ecmp = rt.routes["10.12.255.8/30"]
     assert ecmp.protocol == "O"
-    assert ecmp.next_hops == ["10.12.255.1", "10.12.255.10"]
-    assert rt.expected_count == 12 and len(rt.routes) == 10
-    assert rt.complete is False                             # copy was cut short
+    assert ecmp.next_hops == ["10.12.255.2", "10.12.255.6"]
+    assert rt.complete is True
 
 
 def test_ip_route_static_null0():

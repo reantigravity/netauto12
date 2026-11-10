@@ -109,7 +109,11 @@ def split_session(text: str) -> Session:
         if m and not line.startswith(" "):
             flush()
             session.hostname = session.hostname or m.group("host")
-            current = (m.group("cmd"), [])
+            cmd = m.group("cmd")
+            # "R1#R1#show ip route": text pasted right after a bare prompt
+            while (again := _PROMPT.match(cmd)) and again.group("host") == m.group("host"):
+                cmd = again.group("cmd")
+            current = (cmd, [])
         elif current is not None:
             current[1].append(line)
     flush()
