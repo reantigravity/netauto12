@@ -32,10 +32,16 @@ def main() -> int:
     if missing:
         print("Set these environment variables first: " + ", ".join(missing))
         return 2
+    port_raw = os.environ.get("NETAUTO_PORT", "22").strip()
+    if not port_raw.isdigit():
+        print(f"NETAUTO_PORT must be a number like 22, got: {port_raw!r}\n"
+              "If Quick Access shows 'ssh USER@HOST', then USER goes to NETAUTO_USER "
+              "and HOST goes to NETAUTO_HOST.")
+        return 2
     device = {
         "device_type": "cisco_xe",
         "host": os.environ["NETAUTO_HOST"],
-        "port": int(os.environ.get("NETAUTO_PORT", "22")),
+        "port": int(port_raw),
         "username": os.environ["NETAUTO_USER"],
         "password": os.environ["NETAUTO_SECRET"],
         "conn_timeout": 20,
