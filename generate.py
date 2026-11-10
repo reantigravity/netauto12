@@ -18,17 +18,10 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from netauto.plan import PlanError, lint_plan, load_plan
+from netauto.platforms import CAPABILITIES
 
 ROOT = Path(__file__).resolve().parent
 
-# What each target platform can and cannot do. The plan stays the same;
-# templates and the validator adapt to the platform.
-CAPABILITIES = {
-    # Packet Tracer 9 (2911): rejects "ipv6 route <prefix> Null0"
-    "pt": {"ipv6_null_route": False},
-    # Real IOS / IOS XE (CML, DevNet Sandbox)
-    "lab": {"ipv6_null_route": True},
-}
 
 
 def render_configs(plan, target: str, out_dir: Path) -> list[Path]:

@@ -1,0 +1,64 @@
+R2#enable
+R2#terminal length 0
+            ^
+% Invalid input detected at '^' marker.
+	
+R2#show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol 
+GigabitEthernet0/0     10.12.20.1      YES manual up                    up 
+GigabitEthernet0/1     10.12.255.2     YES manual up                    up 
+GigabitEthernet0/2     10.12.255.9     YES manual administratively down down 
+Loopback0              10.12.0.2       YES manual up                    up 
+Vlan1                  192.168.1.1     YES manual up                    up
+R2#show ipv6 interface brief
+GigabitEthernet0/0         [up/up]
+    FE80::201:C7FF:FEB4:1
+    2001:DB8:12:20::1
+GigabitEthernet0/1         [up/up]
+    FE80::2
+    2001:DB8:12:FF12::2
+GigabitEthernet0/2         [administratively down/down]
+    FE80::2
+    2001:DB8:12:FF23::1
+Loopback0                  [up/up]
+    FE80::201:C7FF:FEB4:478
+    2001:DB8:12::2
+Vlan1                      [administratively down/down]
+    unassigned
+R2#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area
+       * - candidate default, U - per-user static route, o - ODR
+       P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+     10.0.0.0/8 is variably subnetted, 12 subnets, 3 masks
+O       10.12.0.1/32 [110/2] via 10.12.255.1, 01:08:13, GigabitEthernet0/1
+C       10.12.0.2/32 is directly connected, Loopback0
+O       10.12.0.3/32 [110/2] via 10.12.255.10, 01:07:46, GigabitEthernet0/2
+O       10.12.10.0/24 [110/2] via 10.12.255.1, 01:08:13, GigabitEthernet0/1
+C       10.12.20.0/24 is directly connected, GigabitEthernet0/0
+L       10.12.20.1/32 is directly connected, GigabitEthernet0/0
+O       10.12.30.0/24 [110/2] via 10.12.255.10, 01:07:46, GigabitEthernet0/2
+C       10.12.255.0/30 is directly connected, GigabitEthernet0/1
+L       10.12.255.2/32 is directly connected, GigabitEthernet0/1
+O       10.12.255.4/30 [110/2] via 10.12.255.1, 01:07:36, GigabitEthernet0/1
+                       [110/2] via 10.12.255.10, 01:07:36, GigabitEthernet0/2
+
+R2#how ipv6 route
+       ^
+% Invalid input detected at '^' marker.
+	
+R2#show ip ospf neighbor
+
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+10.12.0.1         1   FULL/BDR        00:00:30    10.12.255.1     GigabitEthernet0/1
+R2#show ipv6 ospf neighbor
+
+Neighbor ID     Pri   State           Dead Time   Interface ID    Interface
+10.12.0.1         1   FULL/BDR        00:00:39    2               GigabitEthernet0/1
