@@ -30,11 +30,12 @@ Compliance validation (offline, from CLI transcripts copied out of Packet Tracer
 python validate.py --offline snapshots/pt --platform pt          # problems only
 python validate.py --offline snapshots/pt --platform pt --all    # every check
 python validate.py --offline snapshots/pt --csv reports/compliance.csv
-python -m pytest                                                  # 18 tests
+python -m pytest                                                  # 20 tests
 ```
 Each snapshot file is a CLI session with these commands:
 `show ip interface brief`, `show ipv6 interface brief`, `show ip route`,
-`show ipv6 route`, `show ip ospf neighbor`, `show ipv6 ospf neighbor`.
+`show ipv6 route`, `show ip ospf neighbor`, `show ipv6 ospf neighbor`
+(optional: `show ip route connected` — used to repair a truncated `show ip route`).
 
 Credentials are read from `NETAUTO_USER` / `NETAUTO_SECRET` environment variables,
 never stored in the repository.

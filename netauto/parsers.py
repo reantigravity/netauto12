@@ -50,6 +50,7 @@ COMMANDS = {
     "ipv6_route": "show ipv6 route",
     "ospf_neighbors": "show ip ospf neighbor",
     "ospfv3_neighbors": "show ipv6 ospf neighbor",
+    "ip_route_connected": "show ip route connected",
 }
 
 _PROMPT = re.compile(r"^(?P<host>[A-Za-z][\w.-]*)(?:\([\w-]+\))?[>#]\s*(?P<cmd>.*)$")
@@ -250,6 +251,39 @@ def parse_ip_route(text: str) -> ParsedRoutes:
     return ParsedRoutes(routes, exp, exp is None or exp == len(routes))
 
 
+_V4_CONNECTED = re.compile(
+    r"^\s*C\s+(?P<net>\d+\.\d+\.\d+\.\d+/\d+)\s+is directly connected, (?P<intf>\S+)"
+)
+
+
+def parse_ip_route_connected(text: str) -> dict[str, Route]:
+    """'show ip route connected' - short output, used to fill gaps in a long table."""
+    routes = {}
+    for line in text.splitlines():
+        m = _V4_CONNECTED.match(line)
+        if m:
+            net = str(ipaddress.ip_network(m.group("net"), strict=False))
+            routes[net] = Route(prefix=net, protocol="C",
+                                interfaces=[normalize_ifname(m.group("intf"))])
+    return routes
+
+
+def merge_connected(table: ParsedRoutes, connected: dict[str, Route]) -> ParsedRoutes:
+    """Add connected routes missing from a truncated 'show ip route'.
+
+    Every connected /n network also has a matching local /32 ("L") route,
+    so each added C route accounts for two entries of the header count.
+    """
+    added = [r for p, r in connected.items() if p not in table.routes]
+    routes = dict(table.routes)
+    for r in added:
+        routes[r.prefix] = r
+    seen = len(table.routes) + sum(2 if ipaddress.ip_network(r.prefix).prefixlen < 32 else 1
+                                   for r in added)
+    complete = table.expected_count is None or seen >= table.expected_count
+    return ParsedRoutes(routes, table.expected_count, complete)
+
+
 _V6_TOTAL = re.compile(r"IPv6 Routing Table - (?:\S+ - )?(?P<n>\d+) entries")
 _V6_ROUTE = re.compile(r"^(?P<code>[A-Z][A-Z0-9]*)\s+(?P<prefix>[0-9A-Fa-f:]+/\d+)\s+\[\d+/\d+\]")
 _V6_VIA = re.compile(r"^\s+via (?P<a>[^,\s]+)(?:, (?P<b>\S+))?")
@@ -318,6 +352,7 @@ PARSERS = {
     "ipv6_route": parse_ipv6_route,
     "ospf_neighbors": parse_ospf_neighbors,
     "ospfv3_neighbors": parse_ospf_neighbors,
+    "ip_route_connected": parse_ip_route_connected,
 }
 
 
@@ -327,6 +362,10 @@ def facts_from_outputs(outputs: dict[str, str], hostname: str | None = None) -> 
     for key, parser in PARSERS.items():
         raw = outputs.get(key)
         facts[key] = parser(raw) if raw is not None else None
+    # A truncated full table is repaired with the short "connected" output
+    full, conn = facts.get("ip_route"), facts.pop("ip_route_connected", None)
+    if full is not None and conn and not full.complete:
+        facts["ip_route"] = merge_connected(full, conn)
     return facts
 
 

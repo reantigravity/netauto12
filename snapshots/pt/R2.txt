@@ -125,3 +125,11 @@ L   2001:DB8:12:FF23::1/128 [0/0]
 L   FF00::/8 [0/0]
      via Null0, receive
 R2#
+
+R2#show ip route connected
+ C   10.12.0.2/32  is directly connected, Loopback0
+ C   10.12.20.0/24  is directly connected, GigabitEthernet0/0
+ C   10.12.255.0/30  is directly connected, GigabitEthernet0/1
+ C   10.12.255.8/30  is directly connected, GigabitEthernet0/2
+
+R2#

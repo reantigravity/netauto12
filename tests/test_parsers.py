@@ -93,3 +93,11 @@ def test_ospf_neighbors_v2_and_v3():
         ids = {(n["router_id"], n["interface"], n["state"]) for n in f[key]}
         assert ids == {("10.12.0.1", "GigabitEthernet0/1", "FULL"),
                        ("10.12.0.2", "GigabitEthernet0/2", "FULL")}
+
+
+def test_truncated_table_is_repaired_with_show_ip_route_connected():
+    f, _ = facts("R2")                     # full table shows 10 of 12 entries
+    rt = f["ip_route"]
+    assert rt.routes["10.12.255.8/30"].protocol == "C"
+    assert rt.routes["10.12.255.8/30"].interfaces == ["GigabitEthernet0/2"]
+    assert rt.complete is True
