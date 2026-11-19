@@ -14,7 +14,8 @@ intended/network.yaml  --(lint)-->  templates/router.j2  -->  configs/*.cfg
 
 ## Status
 - **Done:** plan + lint, Jinja2 config generation, Packet Tracer topology, offline compliance validator (157 PASS / 0 FAIL on the lab), drift demo, 22 tests.
-- **In progress (teacher feedback 19 Nov):** serial WAN links between routers (plan v2), automation server NETAUTO-SRV in the topology.
+- **Done (teacher feedback 19 Nov):** routers connected by serial WAN links (plan v2), automation server NETAUTO-SRV added to the Packet Tracer topology. Verified: OSPFv2/OSPFv3 FULL over serial, ping IPv4/IPv6 from NETAUTO-SRV to all loopbacks, SSH works from NETAUTO-SRV and is refused from PC2 (ACL MGMT-ONLY).
+- **Note:** the SSH user password is not stored in the .pkt or in the repo; set it on each router with `username netauto privilege 15 secret <password>`.
 - **Next:** Netmiko deploy over SSH on Cisco Modeling Labs Free, then NETCONF/YANG, HTML report, presentation.
 - Demo script for the teacher: [`docs/DEMO.md`](docs/DEMO.md)
 - Packet Tracer topology: [`topology/Kenzhaly_Topology.pkt`](topology/Kenzhaly_Topology.pkt) (Packet Tracer 9)
