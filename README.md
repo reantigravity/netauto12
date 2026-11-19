@@ -12,6 +12,11 @@ intended/network.yaml  --(lint)-->  templates/router.j2  -->  configs/*.cfg
                                        validate.py  <--  show commands
 ```
 
+## Status
+- **Done:** plan + lint, Jinja2 config generation, Packet Tracer topology, offline compliance validator (157 PASS / 0 FAIL on the lab), drift demo, 20 tests.
+- **Next:** Netmiko deploy over SSH on Cisco Modeling Labs Free, then NETCONF/YANG, HTML report, presentation.
+- Demo script for the teacher: [`docs/DEMO.md`](docs/DEMO.md)
+
 ## Topology
 Triangle R1 (HQ) – R2 (Branch-1) – R3 (Branch-2), Cisco 2911.
 Each router has one LAN on Gi0/0 with a switch and a PC.
