@@ -16,6 +16,7 @@ intended/network.yaml  --(lint)-->  templates/router.j2  -->  configs/*.cfg
 - **Done:** plan + lint, Jinja2 config generation, Packet Tracer topology, offline compliance validator (157 PASS / 0 FAIL on the lab), drift demo, 20 tests.
 - **Next:** Netmiko deploy over SSH on Cisco Modeling Labs Free, then NETCONF/YANG, HTML report, presentation.
 - Demo script for the teacher: [`docs/DEMO.md`](docs/DEMO.md)
+- Packet Tracer topology: [`topology/Kenzhaly_Topology.pkt`](topology/Kenzhaly_Topology.pkt) (Packet Tracer 9)
 
 ## Topology
 Triangle R1 (HQ) – R2 (Branch-1) – R3 (Branch-2), Cisco 2911.
