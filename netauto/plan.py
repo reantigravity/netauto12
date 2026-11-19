@@ -24,7 +24,12 @@ class Interface:
     ipv6: ipaddress.IPv6Interface | None
     link_local: ipaddress.IPv6Address | None = None
     lan: bool = False
-    peer: str | None = None  # "R2:GigabitEthernet0/1"
+    peer: str | None = None  # "R2:Serial0/0/0"
+    clock_rate: int | None = None  # set on the DCE end of a serial link
+
+    @property
+    def is_serial(self) -> bool:
+        return self.name.lower().startswith("serial")
 
     # Values the templates need, precomputed so templates stay simple
     @property
@@ -88,6 +93,11 @@ class Plan:
     defaults: dict
     routers: dict[str, Router]
     hosts: dict[str, Host]
+    management: dict = field(default_factory=dict)
+
+    @property
+    def mgmt_host(self) -> "Host | None":
+        return self.hosts.get(self.management.get("host", ""))
 
     @property
     def ospf_process(self) -> int:
@@ -128,6 +138,7 @@ def load_plan(path: str | Path) -> Plan:
                         ),
                         lan=bool(i.get("lan", False)),
                         peer=i.get("peer"),
+                        clock_rate=(int(i["clock_rate"]) if i.get("clock_rate") else None),
                     )
                     for ifname, i in r["interfaces"].items()
                 ],
@@ -156,7 +167,7 @@ def load_plan(path: str | Path) -> Plan:
         raise PlanError(f"Cannot parse plan: {exc!r}") from exc
 
     return Plan(meta=raw.get("meta", {}), defaults=raw["defaults"],
-                routers=routers, hosts=hosts)
+                routers=routers, hosts=hosts, management=raw.get("management") or {})
 
 
 # ---------------------------------------------------------------------------
@@ -224,6 +235,16 @@ def lint_plan(plan: Plan) -> list[str]:
                     errors.append(f"{owner} and {i.peer} are in different IPv4 subnets")
                 if other.ipv6.network != i.ipv6.network:
                     errors.append(f"{owner} and {i.peer} are in different IPv6 subnets")
+                # Serial links: exactly one end is DCE and provides the clock
+                if i.is_serial != other.is_serial:
+                    errors.append(f"{owner} and {i.peer}: serial cabled to non-serial")
+                elif i.is_serial and owner < i.peer:   # check each link once
+                    dce = [x for x in (i, other) if x.clock_rate]
+                    if len(dce) != 1:
+                        errors.append(f"Serial link {owner} - {i.peer} needs exactly one "
+                                      f"DCE end with clock_rate (found {len(dce)})")
+            elif i.clock_rate:
+                errors.append(f"{owner} has clock_rate but no peer")
 
     # Different links must not overlap (same link = same subnet is fine)
     links4: dict[ipaddress.IPv4Network, set[str]] = {}
@@ -260,4 +281,7 @@ def lint_plan(plan: Plan) -> list[str]:
         claim(h.ipv4.ip, h.name, seen_v4)
         claim(h.ipv6.ip, h.name, seen_v6)
 
+    if plan.management:
+        if plan.mgmt_host is None:
+            errors.append(f"management.host {plan.management.get('host')!r} is not in hosts")
     return errors

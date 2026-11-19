@@ -37,14 +37,14 @@ python generate.py
 
 ## 4. Валидатор — главная часть (2 мин)
 ```
-python validate.py --offline snapshots/pt --platform pt
+python validate.py --plan intended/archive/network_v1_ethernet.yaml --offline snapshots/pt_v1_ethernet --platform pt
 ```
 > «Скрипт прочитал выводы show-команд со всех роутеров и сравнил с планом:
 > 157 проверок, 0 ошибок. Единственное предупреждение — Packet Tracer
 > не поддерживает IPv6-маршрут на Null0, и скрипт это знает».
 
 ```
-python validate.py --offline snapshots/demo_drift --platform pt
+python validate.py --plan intended/archive/network_v1_ethernet.yaml --offline snapshots/demo_drift_v1 --platform pt
 ```
 > «Здесь R2 специально "сломан": выключен интерфейс, изменён link-local,
 > добавлен интерфейс только с IPv4. Скрипт нашёл 6 ошибок и показал, что именно не так».

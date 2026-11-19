@@ -2,8 +2,9 @@
 #  Intended state (source of truth) for the dual-stack lab network
 #  CSS 312 Computer Networks - Topic 12: Configuration automation
 #
+#  Version 2: router-to-router links are SERIAL WAN links
+#  (Packet Tracer "Serial DCE" cable, module HWIC-2T in each 2911).
 #  Everything the scripts deploy and validate is derived from this file.
-#  Change the plan here -> regenerate -> redeploy -> revalidate.
 # =====================================================================
 
 meta:
@@ -19,8 +20,18 @@ defaults:
     area: 0
 
 # ---------------------------------------------------------------------
-#  Routers (Cisco 2911 in Packet Tracer, IOSv / CSR / Cat8000v in lab)
-#  Topology: triangle R1-R2-R3, each router has one LAN on Gi0/0
+#  Management: where the Python automation code lives and runs.
+#  The scripts run on this host and reach every router over SSH
+#  (Netmiko) or NETCONF. Routers accept SSH/Telnet ONLY from here.
+# ---------------------------------------------------------------------
+management:
+  host: NETAUTO-SRV
+  ssh_user: netauto              # password comes from NETAUTO_SECRET, never from git
+
+# ---------------------------------------------------------------------
+#  Routers: Cisco 2911 + HWIC-2T (Serial0/0/0, Serial0/0/1)
+#  Topology: triangle R1-R2-R3 over serial links, one LAN per router.
+#  clock_rate marks the DCE end of each serial link.
 # ---------------------------------------------------------------------
 routers:
   R1:
@@ -35,18 +46,20 @@ routers:
         ipv6: 2001:db8:12:10::1/64
         link_local: fe80::1
         lan: true
-      GigabitEthernet0/1:
-        description: P2P-to-R2
+      Serial0/0/0:
+        description: WAN-to-R2
         ipv4: 10.12.255.1/30
         ipv6: 2001:db8:12:ff12::1/64
         link_local: fe80::1
-        peer: R2:GigabitEthernet0/1
-      GigabitEthernet0/2:
-        description: P2P-to-R3
+        peer: R2:Serial0/0/0
+        clock_rate: 64000          # DCE
+      Serial0/0/1:
+        description: WAN-to-R3
         ipv4: 10.12.255.5/30
         ipv6: 2001:db8:12:ff13::1/64
         link_local: fe80::1
-        peer: R3:GigabitEthernet0/1
+        peer: R3:Serial0/0/0
+        clock_rate: 64000          # DCE
     # Summary routes to Null0: drop traffic to unused parts of our blocks
     static_routes:
       - prefix: 10.12.0.0/16
@@ -66,18 +79,19 @@ routers:
         ipv6: 2001:db8:12:20::1/64
         link_local: fe80::2
         lan: true
-      GigabitEthernet0/1:
-        description: P2P-to-R1
+      Serial0/0/0:
+        description: WAN-to-R1
         ipv4: 10.12.255.2/30
         ipv6: 2001:db8:12:ff12::2/64
         link_local: fe80::2
-        peer: R1:GigabitEthernet0/1
-      GigabitEthernet0/2:
-        description: P2P-to-R3
+        peer: R1:Serial0/0/0         # DTE
+      Serial0/0/1:
+        description: WAN-to-R3
         ipv4: 10.12.255.9/30
         ipv6: 2001:db8:12:ff23::1/64
         link_local: fe80::2
-        peer: R3:GigabitEthernet0/2
+        peer: R3:Serial0/0/1
+        clock_rate: 64000          # DCE
     static_routes: []
 
   R3:
@@ -92,24 +106,30 @@ routers:
         ipv6: 2001:db8:12:30::1/64
         link_local: fe80::3
         lan: true
-      GigabitEthernet0/1:
-        description: P2P-to-R1
+      Serial0/0/0:
+        description: WAN-to-R1
         ipv4: 10.12.255.6/30
         ipv6: 2001:db8:12:ff13::2/64
         link_local: fe80::3
-        peer: R1:GigabitEthernet0/2
-      GigabitEthernet0/2:
-        description: P2P-to-R2
+        peer: R1:Serial0/0/1         # DTE
+      Serial0/0/1:
+        description: WAN-to-R2
         ipv4: 10.12.255.10/30
         ipv6: 2001:db8:12:ff23::2/64
         link_local: fe80::3
-        peer: R2:GigabitEthernet0/2
+        peer: R2:Serial0/0/1         # DTE
     static_routes: []
 
 # ---------------------------------------------------------------------
-#  End hosts (documentation + used later by the ping tests)
+#  End hosts
 # ---------------------------------------------------------------------
 hosts:
+  NETAUTO-SRV:                     # automation server: Python + Netmiko live here
+    connected_to: R1:GigabitEthernet0/0
+    ipv4: 10.12.10.100/24
+    gateway4: 10.12.10.1
+    ipv6: 2001:db8:12:10::100/64
+    gateway6: fe80::1
   PC1:
     connected_to: R1:GigabitEthernet0/0
     ipv4: 10.12.10.10/24

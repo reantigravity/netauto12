@@ -6,10 +6,11 @@ from netauto.plan import load_plan
 from netauto.platforms import CAPABILITIES
 
 ROOT = Path(__file__).resolve().parents[1]
-PLAN = load_plan(ROOT / "intended" / "network.yaml")
+# Real Packet Tracer snapshots were captured with plan v1 (Ethernet links)
+PLAN = load_plan(ROOT / "intended" / "archive" / "network_v1_ethernet.yaml")
 
 
-def load(name, folder=ROOT / "snapshots" / "pt"):
+def load(name, folder=ROOT / "snapshots" / "pt_v1_ethernet"):
     return facts_from_transcript((folder / f"{name}.txt").read_text(encoding="utf-8"))[0]
 
 

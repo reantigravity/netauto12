@@ -5,7 +5,7 @@ from netauto.parsers import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SNAP = ROOT / "snapshots" / "pt"
+SNAP = ROOT / "snapshots" / "pt_v1_ethernet"
 FIX = ROOT / "tests" / "fixtures"
 
 

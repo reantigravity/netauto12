@@ -35,7 +35,8 @@ def render_configs(plan, target: str, out_dir: Path) -> list[Path]:
     template = env.get_template("router.j2")
     # Credentials never live in the repo: they come from the environment
     mgmt = {
-        "username": os.environ.get("NETAUTO_USER", "netauto"),
+        "host": plan.mgmt_host,
+        "username": os.environ.get("NETAUTO_USER", plan.management.get("ssh_user", "netauto")),
         "secret": os.environ.get("NETAUTO_SECRET", "CHANGE_ME"),
     }
     out_dir.mkdir(parents=True, exist_ok=True)

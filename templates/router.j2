@@ -23,6 +23,9 @@ interface {{ i.name }}
 {% endif %}
  ipv6 address {{ i.ipv6 }}
  ipv6 ospf {{ ospf.process }} area {{ ospf.area }}
+{% if i.clock_rate %}
+ clock rate {{ i.clock_rate }}
+{% endif %}
  no shutdown
 !
 {% endfor %}
@@ -51,12 +54,23 @@ ip route {{ s.prefix.network_address }} {{ s.prefix.netmask }} {{ s.next_hop }}
 ipv6 route {{ s.prefix }} {{ s.next_hop }}
 {% endif %}
 {% endfor %}
-{% if target == "lab" %}
+{% if mgmt.host %}
 !
-! ----- management access for Netmiko (SSH) -----
+! ----- management: SSH only from the automation server {{ mgmt.host.name }} -----
 username {{ mgmt.username }} privilege 15 secret {{ mgmt.secret }}
+crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
+ip access-list standard MGMT-ONLY
+ permit host {{ mgmt.host.ipv4.ip }}
+{% if target == "lab" %}
+ipv6 access-list MGMT6-ONLY
+ permit ipv6 host {{ mgmt.host.ipv6.ip }} any
+{% endif %}
 line vty 0 4
+ access-class MGMT-ONLY in
+{% if target == "lab" %}
+ ipv6 access-class MGMT6-ONLY in
+{% endif %}
  login local
  transport input ssh
 {% endif %}

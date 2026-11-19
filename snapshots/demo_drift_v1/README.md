@@ -6,4 +6,4 @@ R1 and R3 are the real Packet Tracer snapshots. R2 was "broken" on purpose:
 - Vlan1 got an IPv4-only address (no IPv6)
 - as a result OSPFv2/OSPFv3 neighbor R3 disappeared
 
-Run: python validate.py --offline snapshots/demo_drift --platform pt
+Run: python validate.py --plan intended/archive/network_v1_ethernet.yaml --offline snapshots/demo_drift_v1 --platform pt

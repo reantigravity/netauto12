@@ -13,16 +13,45 @@ intended/network.yaml  --(lint)-->  templates/router.j2  -->  configs/*.cfg
 ```
 
 ## Status
-- **Done:** plan + lint, Jinja2 config generation, Packet Tracer topology, offline compliance validator (157 PASS / 0 FAIL on the lab), drift demo, 20 tests.
+- **Done:** plan + lint, Jinja2 config generation, Packet Tracer topology, offline compliance validator (157 PASS / 0 FAIL on the lab), drift demo, 22 tests.
+- **In progress (teacher feedback 19 Nov):** serial WAN links between routers (plan v2), automation server NETAUTO-SRV in the topology.
 - **Next:** Netmiko deploy over SSH on Cisco Modeling Labs Free, then NETCONF/YANG, HTML report, presentation.
 - Demo script for the teacher: [`docs/DEMO.md`](docs/DEMO.md)
 - Packet Tracer topology: [`topology/Kenzhaly_Topology.pkt`](topology/Kenzhaly_Topology.pkt) (Packet Tracer 9)
 
-## Topology
-Triangle R1 (HQ) – R2 (Branch-1) – R3 (Branch-2), Cisco 2911.
+## Topology (plan v2)
+Triangle R1 (HQ) – R2 (Branch-1) – R3 (Branch-2), Cisco 2911 with HWIC-2T.
+Routers are connected by **serial WAN links** (Serial0/0/0, Serial0/0/1, clock rate 64000 on the DCE end).
 Each router has one LAN on Gi0/0 with a switch and a PC.
 IPv4 block `10.12.0.0/16`, IPv6 block `2001:db8:12::/48`, OSPFv2 + OSPFv3 area 0.
 Full table: `docs/addressing_table.md`.
+
+| Serial link | DCE (clock rate) | DTE | IPv4 | IPv6 |
+|---|---|---|---|---|
+| R1–R2 | R1 S0/0/0 | R2 S0/0/0 | 10.12.255.0/30 | 2001:db8:12:ff12::/64 |
+| R1–R3 | R1 S0/0/1 | R3 S0/0/0 | 10.12.255.4/30 | 2001:db8:12:ff13::/64 |
+| R2–R3 | R2 S0/0/1 | R3 S0/0/1 | 10.12.255.8/30 | 2001:db8:12:ff23::/64 |
+
+Plan v1 (Ethernet links between routers) is kept in `intended/archive/` together with
+its Packet Tracer snapshots `snapshots/pt_v1_ethernet/`.
+
+## Where the Python code runs
+The scripts do **not** run on routers or switches. They live and run on a dedicated
+**automation server `NETAUTO-SRV`** (10.12.10.100, 2001:db8:12:10::100) in the HQ LAN —
+in a real company this is an admin workstation or a server ("control node").
+
+```
+ NETAUTO-SRV (Python, Netmiko, ncclient, network.yaml)
+      |  SSH (TCP 22) / NETCONF (TCP 830)
+      v
+  SW1 -- R1 ==serial== R2
+          \\          //
+           == R3 ===
+```
+- Routers keep only their configuration; the logic (plan, templates, validation) is on the server.
+- Routers accept SSH **only from NETAUTO-SRV** (`access-class MGMT-ONLY` on the VTY lines),
+  so nobody else can log in to change the network.
+- One server manages any number of devices: adding a router means adding it to `network.yaml`.
 
 ## Usage
 ```bash
@@ -33,10 +62,8 @@ python generate.py --target lab     # configs/lab/*.cfg (adds SSH for Netmiko)
 ```
 Compliance validation (offline, from CLI transcripts copied out of Packet Tracer):
 ```bash
-python validate.py --offline snapshots/pt --platform pt          # problems only
-python validate.py --offline snapshots/pt --platform pt --all    # every check
-python validate.py --offline snapshots/pt --csv reports/compliance.csv
-python -m pytest                                                  # 20 tests
+python validate.py --plan intended/archive/network_v1_ethernet.yaml --offline snapshots/pt_v1_ethernet --platform pt   # v1 snapshots
+python -m pytest                                                  # 22 tests
 ```
 Each snapshot file is a CLI session with these commands:
 `show ip interface brief`, `show ipv6 interface brief`, `show ip route`,
